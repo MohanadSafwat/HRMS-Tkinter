@@ -1,22 +1,19 @@
 from cgitb import text
 from distutils.log import error
 from doctest import master
+from email.mime import image
+from msilib.schema import Font
 from pickle import TRUE
 from re import X
 import tkinter as tk
-from tkinter import BOTH, CENTER, LEFT, Button, Entry, Label, ttk
+from ttkwidgets import CheckboxTreeview
+from tkinter import  BOTH, CENTER, LEFT, Button, Entry, Label, PhotoImage, ttk
 from turtle import bgcolor, left
 from emoji import emojize
+from PIL import Image, ImageTk as itk
 
-# textfield("Name",30,20,10,y[1])
-#             textfield("Age",30,20,10,y[2])
-#             textfield("Job",30,20,10,y[3])
-#             textfield("Email",30,20,10,y[4])
-#             textfield("Gender",30,20,10,y[5])
-#             textfield("Mobile",30,20,10,y[6])
-#             textfield("Address",30,20,10,y[7])
-#             textfield("Paid",30,20,10,y[8])
 
+import customtkinter
 import sv_ttk
 
 import sqlite3
@@ -24,8 +21,6 @@ from tokenize import String
 with sqlite3.connect("HRMS.db") as db:
     cursor=db.cursor()
 
-# cursor.execute ("""DROP TABLE Employess""")
-# cursor.execute ("""DROP TABLE employee""")
 
 cursor.execute(""" CREATE TABLE IF NOT EXISTS employee (id integer PRIMARY KEY AUTOINCREMENT 
 , name text NOT NULL ,age int NOT NULL,
@@ -57,6 +52,7 @@ class app:
 
     def __init__(self, master):
         self.master = master
+        
         self.master.geometry("1200x800")
         root.title('HR Management System')
         root.geometry("1200x800")
@@ -64,13 +60,7 @@ class app:
         sv_ttk.set_theme(theme)
         self.login()
     
-    
 
-    def create_button(self,text,command,width):
-        self.framesign = ttk.Frame(self.master, width=300, height=300)
-        self.framesign.pack()
-        self.register_btn = ttk.Button(self.framesign, text=text, command=command,width=width)
-        self.register_btn.pack()
 
     def auth(self,error,username,password):
         cursor.execute("SELECT * from users WHERE username=? AND password=?",(username,password))
@@ -92,18 +82,26 @@ class app:
         
         error=tk.Message(text="",width=200)
         error.pack()
-        self.create_button("Sign in",lambda : self.auth(error,usernameTextField.get_value(),passwordTextField.get_value()),20)
-        # self.framesign = ttk.Frame(self.master, width=300)
-        # self.framesign.pack()
-        # self.register_btn = ttk.Button(self.framesign, text="Sign in", command=self.register)
-        # self.register_btn.pack()
+
+        signinicon = itk.PhotoImage(Image.open("sign-in.png").resize((20,20),Image.ANTIALIAS))
+
+        style = ttk.Style(root)
+        style.configure("TButton", font=('wasy10', 15))
+
+        self.framesign = ttk.Frame(self.master, width=300, height=300)
+        self.framesign.pack()
+        self.signin_button = customtkinter.CTkButton(self.framesign,image=signinicon, text="Sign in",text_font=8,command=lambda : self.auth(error,usernameTextField.get_value(),passwordTextField.get_value())
+        ,compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5",width=50,height=50)
+        self.signin_button.pack()
+
+   
         
         sv_ttk.set_theme("light")
 
     def getdata(self):
         x=self.tv.selection()
         y=self.tv.item(x)['values']
-        print(y)
+        print("getatra   ",y)
         return y
     
     def register(self,user):
@@ -116,71 +114,67 @@ class app:
         self.text2 = tk.Label(self.frame2, text=welcome_message,font = ('calibri', 33))
         self.text2.pack(side="left" )
 
-        # self.button = self.button(self.frame2, text='Add' , command=edit)
-        # self.button.pack(side="right", padx=10)
-        self.button = ttk.Button(self.frame2, text="Sign Out", command=self.login)
-        self.button.pack(side="right", padx=10)
+        editicon = itk.PhotoImage(Image.open("pencil.png").resize((20,20),Image.ANTIALIAS))
+        deleteicon = itk.PhotoImage(Image.open("remove.png").resize((20,20),Image.ANTIALIAS))
+        signouticon = itk.PhotoImage(Image.open("logout.png").resize((15,15),Image.ANTIALIAS))
+        addemployeeicon = itk.PhotoImage(Image.open("add-user.png").resize((20,20),Image.ANTIALIAS))
+
+        self.signoutbutton = customtkinter.CTkButton(self.frame2,image=signouticon, text="Sign Out",command=self.login,
+        compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5")
+        self.signoutbutton.pack(side="right", padx=10)
 
 
-
-        self.button = ttk.Button(self.frame2, text="Delete Employee",command=lambda : self.delete_empoyee(user))
-        self.button.pack(side="right")
-
-        self.button = ttk.Button(self.frame2, text="Add Employee",command=lambda : self.add_emploee(user))
-        self.button.pack(side="right", padx=10)
-
-
-        self.accentbutton = ttk.Button(self.frame2, text="Edit", style="Accent.TButton",command=lambda : self.Editing(user))
-        self.accentbutton.pack(side="right", padx=10)
-
-
+        self.add_employee_button = customtkinter.CTkButton(self.frame2,image=addemployeeicon, text="Add Employee",command=lambda : self.add_emploee(user)
+        ,compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5",width=10)
+        self.add_employee_button.pack(side="right", padx=10)
 
         self.frame1 = ttk.Frame(self.master, padding=10)
 
+        Column_id=1,2,3,4,5,6,7,8,9
 
+        error=tk.Message(text="",width=300)
 
+        self.edittreeview = ttk.Frame(self.frame1)
+        self.edittreeview.pack(side="right",anchor='center')
+        self.editbutton=customtkinter.CTkButton(self.edittreeview,image=editicon,text="",width=25,height=25,
+        command=lambda : self.Editing(error,user),compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5")
+        self.editbutton.pack(side='top',pady=10)       
 
-        # style = ttk.Style()
-        # style.configure("mystyle.Treeview",font=('calibri',13),rowheight=50)
-        # style.configure("mystyle.Treeview.Heading",font=('calibri',13))
-        self.tv = ttk.Treeview(self.frame1, columns=(1,2,3,4,5,6,7,8,9))
+        self.deletebutton=customtkinter.CTkButton(self.edittreeview,image=deleteicon,text="",width=25,height=25,
+         command=lambda : self.delete_empoyee(error,user),compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5")
+        self.deletebutton.pack(side='top') 
+      
+
+        self.tv = ttk.Treeview(self.frame1, columns=(Column_id))
+         
+
         self.tv.pack(fill="both",padx=20, pady=20)
-
         self.tv.heading("1", text="ID")
-        self.tv.column("1", width="40")
+        self.tv.column("1", width="40",anchor='center')
         self.tv.heading("2", text="Name")
-        self.tv.column("2", width="140")
+        self.tv.column("2", width="140",anchor='center')
         self.tv.heading("3", text="Age")
-        self.tv.column("3", width="50")
+        self.tv.column("3", width="50",anchor='center')
         self.tv.heading("4", text="Job")
-        self.tv.column("4", width="150")
+        self.tv.column("4", width="150",anchor='center')
         self.tv.heading("5", text="Email")
-        self.tv.column("5", width="180")
+        self.tv.column("5", width="180",anchor='center')
         self.tv.heading("6", text="Gender")
-        self.tv.column("6", width="90")
+        self.tv.column("6", width="90",anchor='center')
         self.tv.heading("7", text="Mobile")
-        self.tv.column("7", width="120")
+        self.tv.column("7", width="120",anchor='center')
         self.tv.heading("8", text="Address")
-        self.tv.column("8", width="180")
+        self.tv.column("8", width="180",anchor='center')
         self.tv.heading("9", text="Paid")
-        self.tv.column("9", width="50")
+        self.tv.column("9", width="50",anchor='center')
+
         self.tv['show']= 'headings'
 
         cursor.execute("SELECT * from employee ORDER BY id ASC")
         employees=cursor.fetchall()
-        print(employees)
+        print("employees", employees)
         for employee in employees:
             self.tv.insert('', employee[0],values=employee)
-
-        # self.tv.place(x=1,y=1)
-        # text1 = tk.Text(self.frame1, borderwent1th=0, highlightthickness=0, wrap="word",
-        #                 width=40, height=4)
-        # text1.pack(fill="both", expand=True
-        # )
-        # text1.bind("<FocusIn>", lambda event: self.frame1.state(["focus"]))
-        # text1.bind("<FocusOut>", lambda event: self.frame1.state(["!focus"]))
-        # text1.insert("end", "This went1get has the focus")
-
 
 
         self.frame2.pack(side="top", fill="x", padx=20, pady=10)
@@ -192,13 +186,17 @@ class app:
 
     storeddata=["","","","","","",""]
     
-    def delete_empoyee(self,user):
+    def delete_empoyee(self,error,user):
         selecteddata=self.getdata()
         print("selecteddata", selecteddata)
-        cursor.execute("DELETE FROM employee WHERE id="+str(selecteddata[0]))
-        db.commit()
-        self.register(user)
+        error.pack()
 
+        if selecteddata == "":
+            error["text"]="Please select an employee to Delete"
+        else :
+            cursor.execute("DELETE FROM employee WHERE id="+str(selecteddata[0]))
+            db.commit()
+            self.register(user)
         
 
     def create(self,title,entwidth,fontsize,pady,text):
@@ -209,9 +207,16 @@ class app:
         self.ent1=ttk.Entry(self.fram1,text="",width=entwidth)
         self.ent1.insert(0, text)
         self.ent1.pack(side=tk.LEFT,padx=10)
-    def Editing(self,user):
+
+    def Editing(self,error,user):
         y=self.getdata()
-        self.Edit_employee(y,user)
+        print("sasa ",y)
+        error.pack()
+
+        if y == "":
+            error["text"]="Please select an employee or add one"
+        else :
+            self.Edit_employee(y,user)
 
     def insertEmployee(self,error,name, age, job, email, gender, mobile, address):
         try: 
@@ -273,18 +278,7 @@ class app:
             self.register_btn2 = ttk.Button(self.framebutton, text="Back", command=lambda : self.register(user),width=12)
             self.register_btn2.pack()
 
-            
-
-
 root = tk.Tk()
 app(root)
-
-
-
-
-
-
-
-
 
 root.mainloop()
