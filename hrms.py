@@ -7,7 +7,7 @@ from pickle import TRUE
 from re import X
 import tkinter as tk
 from ttkwidgets import CheckboxTreeview
-from tkinter import  BOTH, CENTER, LEFT, Button, Entry, Label, PhotoImage, ttk
+from tkinter import  BOTH, CENTER, LEFT, Button, Entry, Label, PhotoImage, Toplevel, ttk
 from turtle import bgcolor, left
 from emoji import emojize
 from PIL import Image, ImageTk as itk
@@ -103,7 +103,20 @@ class app:
         y=self.tv.item(x)['values']
         print("getatra   ",y)
         return y
-    
+    def open_popup(self,title,messege,yesfunction,cancelfunction):
+        top= Toplevel(master)
+        top.geometry("400x150")
+        top.title(title)
+
+        self.framepopup = ttk.Frame(top, width=300, height=300)
+        self.framepopup.pack(side="bottom",anchor='ne',pady=10)
+        Label(top, text= messege, font=('calibri 13')).pack(side="left",anchor="c",padx=25)
+
+        self.yes = customtkinter.CTkButton(self.framepopup,command= yesfunction, text="Yes",text_font=6,fg_color="#E2E5DE",hover_color="#E2E5DE")
+        self.yes.pack(side='left',padx=5)
+        self.cancel = customtkinter.CTkButton(self.framepopup,command=cancelfunction, text="cancel",text_font=6,fg_color="#E2E5DE",hover_color="#E2E5DE")
+        self.cancel.pack(side='right',padx=5)
+        # Label(top, text= "Hello World!", font=('Mistral 18 bold')).place(x=150,y=150)
     def register(self,user):
         for i in self.master.winfo_children():
             i.destroy()
@@ -186,6 +199,13 @@ class app:
 
     storeddata=["","","","","","",""]
     
+    def deleting_query(self,user,selecteddata):
+        cursor.execute("DELETE FROM employee WHERE id="+str(selecteddata[0]))
+        db.commit()
+        for i in self.master.winfo_children():
+            i.destroy()
+        self.register(user)
+
     def delete_empoyee(self,error,user):
         selecteddata=self.getdata()
         print("selecteddata", selecteddata)
@@ -193,10 +213,10 @@ class app:
 
         if selecteddata == "":
             error["text"]="Please select an employee to Delete"
+
         else :
-            cursor.execute("DELETE FROM employee WHERE id="+str(selecteddata[0]))
-            db.commit()
-            self.register(user)
+            self.open_popup("Delete","Are you sure you want to delete this employee",lambda : self.deleting_query(user,selecteddata),lambda : self.register(user))
+
         
 
     def create(self,title,entwidth,fontsize,pady,text):
