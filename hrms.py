@@ -1,13 +1,15 @@
 from cgitb import text
+from distutils.cmd import Command
 from distutils.log import error
 from doctest import master
 from email.mime import image
 from msilib.schema import Font
 from pickle import TRUE
 from re import X
+
 import tkinter as tk
 from ttkwidgets import CheckboxTreeview
-from tkinter import  BOTH, CENTER, LEFT, Button, Entry, Label, PhotoImage, Toplevel, ttk
+from tkinter import  BOTH, CENTER, LEFT, Button, Canvas, Entry, Label, PhotoImage, Tk, Toplevel, ttk
 from turtle import bgcolor, left
 from emoji import emojize
 from PIL import Image, ImageTk as itk
@@ -36,14 +38,14 @@ cursor.execute(""" CREATE TABLE IF NOT EXISTS users (id integer PRIMARY KEY AUTO
 class textfield:
     ent1=""
     
-    def __init__(self,app,title,entwidth,fontsize,pady,text) :
-        self.fram1 = ttk.Frame(app.master, width=300, height=300)
+    def __init__(self,app,title,entwidth,fontsize,pady,padylbl,text,sidelbl,sideentry) :
+        self.fram1 = ttk.Frame(app, width=300, height=300)
         self.fram1.pack(pady=pady)
         self.lbl1 = ttk.Label(self.fram1, text=title,font=('calibri',fontsize))
-        self.lbl1.pack(side=tk.LEFT)
+        self.lbl1.pack(side=sidelbl,pady=padylbl)
         self.ent1=ttk.Entry(self.fram1,text="",width=entwidth)
         self.ent1.insert(0, text)
-        self.ent1.pack(side=tk.LEFT,padx=10)
+        self.ent1.pack(side=sideentry,padx=10)
     def get_value(self):
         return self.ent1.get()
 
@@ -77,8 +79,8 @@ class app:
         self.frame1 = ttk.Frame(self.master, width=300, height=150)
         self.frame1.pack(pady=100)
 
-        usernameTextField=textfield(self,"Username",30,20,12,"")
-        passwordTextField=textfield(self,"Password",30,20,12,"")
+        usernameTextField=textfield(self.master,"Username",30,20,12,0,"",tk.LEFT,tk.LEFT)
+        passwordTextField=textfield(self.master,"Password",30,20,12,0,"",tk.LEFT,tk.LEFT)
         
         error=tk.Message(text="",width=200)
         error.pack()
@@ -103,20 +105,109 @@ class app:
         y=self.tv.item(x)['values']
         print("getatra   ",y)
         return y
-    def open_popup(self,title,messege,yesfunction,cancelfunction):
-        top= Toplevel(master)
-        top.geometry("400x150")
+    def disable_event():
+        pass
+    def open_popup(self,window,title,messege,yesfunction,cancelfunction):
+        top= Toplevel(window)
+        # top.geometry("400x150")
+        top.geometry('%dx%d+%d+%d' % (400, 150, 550, 300))
+
         top.title(title)
+        top.protocol("WM_DELETE_WINDOW", self.disable_event)        
+        top.resizable(0,0)
 
         self.framepopup = ttk.Frame(top, width=300, height=300)
         self.framepopup.pack(side="bottom",anchor='ne',pady=10)
-        Label(top, text= messege, font=('calibri 13')).pack(side="left",anchor="c",padx=25)
+        Label(top, text= messege, font=('calibri 13')).pack(side="left",anchor="c",padx=35)
 
-        self.yes = customtkinter.CTkButton(self.framepopup,command= yesfunction, text="Yes",text_font=6,fg_color="#E2E5DE",hover_color="#E2E5DE")
+        self.yes = customtkinter.CTkButton(self.framepopup,command= yesfunction, text="Yes",text_font=6,fg_color="#E2E5DE",hover_color="#E2E5DE",width=20)
         self.yes.pack(side='left',padx=5)
-        self.cancel = customtkinter.CTkButton(self.framepopup,command=cancelfunction, text="cancel",text_font=6,fg_color="#E2E5DE",hover_color="#E2E5DE")
+        self.cancel = customtkinter.CTkButton(self.framepopup,command=cancelfunction, text="cancel",text_font=6,fg_color="#E2E5DE",hover_color="#E2E5DE",width=15)
         self.cancel.pack(side='right',padx=5)
-        # Label(top, text= "Hello World!", font=('Mistral 18 bold')).place(x=150,y=150)
+#    def insertEmployee(self,edit,name, age, job, email, gender, mobile, address):
+        # try: 
+           
+        #     error["text"]="User is ADDED sucessfully"
+        #     print('name', name)
+        # except:
+        #     error["text"]="User is already exists in the database"
+        #     print(NameError)
+    def adding_query(self,user,error,edit,name,age,job,email,gender,mobile,address):
+        # try:
+            cursor.execute("INSERT INTO employee (name,age,job,email,gender,mobile,address) VALUES (?,?,?,?,?,?,?)",(name,age,job,email,gender,mobile,address))
+            db.commit()        
+            for i in self.master.winfo_children():
+                i.destroy()
+            self.register(user)
+        # except:
+        #     error["text"]="User is already exists in the database"
+        #     print(NameError)
+    def edit_database(self,user,name, age, job, email, gender, mobile, address,paid,id):
+        
+        cursor.execute("UPDATE employee SET name=?,age=?,job=?,email=?,gender=?,mobile=?,address=?,paid=? WHERE id=?" ,(name,age,job,email,gender,mobile,address,paid,id))
+        db.commit()
+        for i in self.master.winfo_children():
+            i.destroy()
+        self.register(user)
+
+  
+    
+    def popup_Edit_window(self,y,user):
+        edit= Toplevel()
+        edit.title("Edit Employee")
+        edit.geometry('%dx%d+%d+%d' % (250, 700, 600, 70))
+        edit.resizable(0,0)
+        saveicon = itk.PhotoImage(Image.open("floppy-disk.png").resize((30,30),Image.ANTIALIAS))
+        # edit.overrideredirect(1)
+        print("y,",y)
+        nameTextField=textfield(edit,"Name",25,15,5,5,y[1],tk.TOP,tk.TOP)
+        ageTextField=textfield(edit,"Age",25,15,5,5,y[2],tk.TOP,tk.TOP)
+        jobTextField=textfield(edit,"Job",25,15,5,5,y[3],tk.TOP,tk.TOP)
+        emailTextField=textfield(edit,"Email",25,15,5,5,y[4],tk.TOP,tk.TOP)
+        genderTextField=textfield(edit,"Gender",25,15,5,5,y[5],tk.TOP,tk.TOP)
+        mobileTextField=textfield(edit,"Mobile",25,15,5,5,y[6],tk.TOP,tk.TOP)
+        addressTextField=textfield(edit,"Address",25,15,5,5,y[7],tk.TOP,tk.TOP)
+        paidTextField=textfield(edit,"Paid",25,15,5,5,y[8],tk.TOP,tk.TOP)
+        self.sasa = ttk.Frame(edit)
+        self.sasa.pack(anchor='center',pady=10)
+        self.savebutton1=customtkinter.CTkButton(self.sasa,image=saveicon,text="",width=25,height=25,
+        command=lambda :self.open_popup(edit.master,"Save","Are you sure you want to save",lambda :self.edit_database(user,nameTextField.get_value(),ageTextField.get_value(),jobTextField.get_value(),emailTextField.get_value(),genderTextField.get_value(),mobileTextField.get_value(),addressTextField.get_value(),paidTextField.get_value(),y[0]),lambda : self.register(user)),compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5")
+        
+        self.savebutton1.pack(side='left',padx=15)  
+# command=lambda :self.edit_database(user,nameTextField.get_value(),ageTextField.get_value(),jobTextField.get_value(),emailTextField.get_value(),genderTextField.get_value(),mobileTextField.get_value(),addressTextField.get_value(),paidTextField.get_value(),y[0])
+    def popup_Add_window(self,user):
+        delete= Toplevel()
+        delete.title("Add Employee")
+        delete.geometry('%dx%d+%d+%d' % (250, 650, 550, 70))
+        error=tk.Message(text="",width=150)
+        error.pack()
+
+        saveicon = itk.PhotoImage(Image.open("check.png").resize((30,30),Image.ANTIALIAS))
+        cancelicon = itk.PhotoImage(Image.open("back.png").resize((30,30),Image.ANTIALIAS))
+        # edit.protocol("WM_DELETE_WINDOW", self.disable_event)        # top.overrideredirect(1)
+        delete.resizable(0,0)
+        name1=textfield(delete,"Name",25,15,5,5,"",tk.TOP,tk.TOP)
+        age1=textfield(delete,"Age",25,15,5,5,"",tk.TOP,tk.TOP)        
+        job1=textfield(delete,"Job",25,15,5,5,"",tk.TOP,tk.TOP)
+        email1=textfield(delete,"Email",25,15,5,5,"",tk.TOP,tk.TOP)
+        gender1=textfield(delete,"Gender",25,15,5,5,"",tk.TOP,tk.TOP)
+        mobile1=textfield(delete,"Mobile",25,15,5,5,"",tk.TOP,tk.TOP)
+        address1=textfield(delete,"Address",25,15,5,5,"",tk.TOP,tk.TOP)
+        # paid1=textfield(edit,"Paid",25,15,5,5,"",tk.TOP,tk.TOP)
+        error=tk.Message(text="",width=200)
+        error.pack()
+        self.sasa = ttk.Frame(delete)
+        self.sasa.pack(anchor='center',pady=10)
+        self.savebutton1=customtkinter.CTkButton(self.sasa,image=saveicon,text="",width=25,height=25,
+        command=lambda : self.adding_query(user,delete,error,name1.get_value(),age1.get_value(),job1.get_value(),email1.get_value(),gender1.get_value(),mobile1.get_value(),address1.get_value()),compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5")
+        self.savebutton1.pack(side='left',padx=15)       
+
+        self.deletebutton=customtkinter.CTkButton(self.sasa,image=cancelicon,text="",width=25,height=25,
+       command=lambda : self.register(user),compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5")
+        self.deletebutton.pack(side='left') 
+
+
+
     def register(self,user):
         for i in self.master.winfo_children():
             i.destroy()
@@ -124,7 +215,7 @@ class app:
 
         welcome_message="Welcome " + user[0][1] + "..... 👋"
         self.frame2 = ttk.Frame(self.master)
-        self.text2 = tk.Label(self.frame2, text=welcome_message,font = ('calibri', 33))
+        self.text2 = tk.Label(self.frame2, text=welcome_message,font = ('Mistral', 33))
         self.text2.pack(side="left" )
 
         editicon = itk.PhotoImage(Image.open("pencil.png").resize((20,20),Image.ANTIALIAS))
@@ -136,8 +227,7 @@ class app:
         compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5")
         self.signoutbutton.pack(side="right", padx=10)
 
-
-        self.add_employee_button = customtkinter.CTkButton(self.frame2,image=addemployeeicon, text="Add Employee",command=lambda : self.add_emploee(user)
+        self.add_employee_button = customtkinter.CTkButton(self.frame2,image=addemployeeicon, text="Add Employee",command=lambda : self.popup_Add_window(user) 
         ,compound="right",fg_color="#FFFFFF",hover_color="#F5F5F5",width=10)
         self.add_employee_button.pack(side="right", padx=10)
 
@@ -215,7 +305,7 @@ class app:
             error["text"]="Please select an employee to Delete"
 
         else :
-            self.open_popup("Delete","Are you sure you want to delete this employee",lambda : self.deleting_query(user,selecteddata),lambda : self.register(user))
+            self.open_popup(master,"Delete","Are you sure you want to delete this employee",lambda : self.deleting_query(user,selecteddata),lambda : self.register(user))
 
         
 
@@ -236,69 +326,57 @@ class app:
         if y == "":
             error["text"]="Please select an employee or add one"
         else :
-            self.Edit_employee(y,user)
+            self.popup_Edit_window(y,user)
 
-    def insertEmployee(self,error,name, age, job, email, gender, mobile, address):
-        try: 
-            cursor.execute("INSERT INTO employee (name,age,job,email,gender,mobile,address) VALUES (?,?,?,?,?,?,?)",(name,age,job,email,gender,mobile,address))
-            db.commit()
-            error["text"]="User is ADDED sucessfully"
-            print('name', name)
-        except:
-            error["text"]="User is already exists in the database"
-            print(NameError)
-    
-
-
-    def add_emploee(self,user):
-            for i in self.master.winfo_children():
-                i.destroy()
-            self.frameaddemployee = ttk.Frame(self.master)
-            self.frameaddemployee.pack(pady=100)
-            nameTextField = textfield(self,"Name",30,20,12,"")
-            age=textfield(self,"Age",30,20,10,"")
-            job=textfield(self,"Job",30,20,10,"")
-            email=textfield(self,"Email",30,20,10,"")
-            gender=textfield(self,"Gender",30,20,10,"")
-            mobile=textfield(self,"Mobile",30,20,10,"")
-            address=textfield(self,"Address",30,20,20,"")
-            error=tk.Message(text="",width=200)
-            error.pack()
-            self.framebutton = ttk.Frame(self.master, width=300, height=300)
-            self.framebutton.pack()
-            self.register_btn = ttk.Button(self.framebutton, text="Add", command=lambda : self.insertEmployee(error,  nameTextField.get_value(),age.get_value(),job.get_value(),email.get_value(),gender.get_value(),mobile.get_value(),address.get_value()) ,width=12)
-            self.register_btn.pack(side="left",padx=15)
-            self.register_btn2 = ttk.Button(self.framebutton, text="Back", command=lambda : self.register(user),width=12)
-            self.register_btn2.pack()
-            
-    def edit_database(self,name, age, job, email, gender, mobile, address,paid,id):
-        
-        cursor.execute("UPDATE employee SET name=?,age=?,job=?,email=?,gender=?,mobile=?,address=?,paid=? WHERE id=?" ,(name,age,job,email,gender,mobile,address,paid,id))
-        db.commit()
-        self.register()
-
-    def Edit_employee(self,y,user):
-            for i in self.master.winfo_children():
-                i.destroy()
-            self.frameaddemployee = ttk.Frame(self.master)
-            self.frameaddemployee.pack(pady=100)
-            print("y,",y)
-            nameTextField=textfield(self,"Name",30,20,10,y[1])
-            ageTextField=textfield(self,"Age",30,20,10,y[2])
-            jobTextField=textfield(self,"Job",30,20,10,y[3])
-            emailTextField=textfield(self,"Email",30,20,10,y[4])
-            genderTextField=textfield(self,"Gender",30,20,10,y[5])
-            mobileTextField=textfield(self,"Mobile",30,20,10,y[6])
-            addressTextField=textfield(self,"Address",30,20,10,y[7])
-            paidTextField=textfield(self,"Paid",30,20,10,y[8])
-            self.framebutton = ttk.Frame(self.master, width=300, height=300)
-            self.framebutton.pack(pady=15)
-            self.register_btn = ttk.Button(self.framebutton, text="Edit", command=lambda :self.edit_database(nameTextField.get_value(),ageTextField.get_value(),jobTextField.get_value(),emailTextField.get_value(),genderTextField.get_value(),mobileTextField.get_value(),addressTextField.get_value(),paidTextField.get_value(),y[0]),width=12)
-            self.register_btn.pack(side="left",padx=15)
-            self.register_btn2 = ttk.Button(self.framebutton, text="Back", command=lambda : self.register(user),width=12)
-            self.register_btn2.pack()
+ 
 
 root = tk.Tk()
 app(root)
 
 root.mainloop()
+
+
+  # def Edit_employee(self,y,user):
+    #         for i in self.master.winfo_children():
+    #             i.destroy()
+    #         self.frameaddemployee = ttk.Frame(self.master)
+    #         self.frameaddemployee.pack(pady=100)
+    #         print("y,",y)
+    #         nameTextField=textfield(self.master,"Name",30,20,10,0,y[1],tk.LEFT,tk.LEFT)
+    #         ageTextField=textfield(self.master,"Age",30,20,10,0,y[2],tk.LEFT,tk.LEFT)
+    #         jobTextField=textfield(self.master,"Job",30,20,10,0,y[3],tk.LEFT,tk.LEFT)
+    #         emailTextField=textfield(self.master,"Email",30,20,10,0,y[4],tk.LEFT,tk.LEFT)
+    #         genderTextField=textfield(self.master,"Gender",30,20,10,0,y[5],tk.LEFT,tk.LEFT)
+    #         mobileTextField=textfield(self.master,"Mobile",30,20,10,0,y[6],tk.LEFT,tk.LEFT)
+    #         addressTextField=textfield(self.master,"Address",30,20,10,0,y[7],tk.LEFT,tk.LEFT)
+    #         paidTextField=textfield(self.master,"Paid",30,20,10,0,y[8],tk.LEFT,tk.LEFT)
+    #         self.framebutton = ttk.Frame(self.master, width=300, height=300)
+    #         self.framebutton.pack(pady=15)
+    #         self.register_btn = ttk.Button(self.framebutton, text="Edit", command=lambda :self.edit_database(nameTextField.get_value(),ageTextField.get_value(),jobTextField.get_value(),emailTextField.get_value(),genderTextField.get_value(),mobileTextField.get_value(),addressTextField.get_value(),paidTextField.get_value(),y[0]),width=12)
+    #         self.register_btn.pack(side="left",padx=15)
+    #         self.register_btn2 = ttk.Button(self.framebutton, text="Back", command=lambda : self.register(user),width=12)
+    #         self.register_btn2.pack()
+
+
+
+    
+    # def add_emploee(self,user):
+    #         for i in self.master.winfo_children():
+    #             i.destroy()
+    #         self.frameaddemployee = ttk.Frame(self.master)
+    #         self.frameaddemployee.pack(pady=100)
+    #         nameTextField = textfield(self.master,"Name",30,20,12,0,"",tk.LEFT,tk.LEFT)
+    #         age=textfield(self.master,"Age",30,20,10,0,"",tk.LEFT,tk.LEFT)
+    #         job=textfield(self.master,"Job",30,20,10,0,"",tk.LEFT,tk.LEFT)
+    #         email=textfield(self.master,"Email",30,20,10,0,"",tk.LEFT,tk.LEFT)
+    #         gender=textfield(self.master,"Gender",30,20,10,0,"",tk.LEFT,tk.LEFT)
+    #         mobile=textfield(self.master,"Mobile",30,20,10,0,"",tk.LEFT,tk.LEFT)
+    #         address=textfield(self.master,"Address",30,20,20,0,"",tk.LEFT,tk.LEFT)
+    #         error=tk.Message(text="",width=200)
+    #         error.pack()
+    #         self.framebutton = ttk.Frame(self.master, width=300, height=300)
+    #         self.framebutton.pack()
+    #         self.register_btn = ttk.Button(self.framebutton, text="Add", command=lambda : self.insertEmployee(error,  nameTextField.get_value(),age.get_value(),job.get_value(),email.get_value(),gender.get_value(),mobile.get_value(),address.get_value()) ,width=12)
+    #         self.register_btn.pack(side="left",padx=15)
+    #         self.register_btn2 = ttk.Button(self.framebutton, text="Back", command=lambda : self.register(user),width=12)
+    #         self.register_btn2.pack()
